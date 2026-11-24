@@ -14,12 +14,14 @@ output path, checking the PNG signature and the 1 MiB size limit first.
 
 ## The day's stories
 
-- **HORMUZ TOLL: 25 DEAD** — UN counts 25 seafarers killed as tanker attacks surge; Trump warns Iran of a 'very traumatic' outcome
-- **RUSSIA WARNS ESTONIA OF 'OPEN WAR'** — Border closure standoff raises NATO alarm
-- **INDONESIA FACTORY FIRE KILLS 24** — Rescuers search for missing after Banten blaze
-- **RUSSIAN SHIP ABLAZE OFF FINLAND** — Cargo vessel Sparta II hit by drone in the Gulf of Finland
-- **ICJ: MYANMAR GUILTY OF GENOCIDE** — World court rules on the Rohingya
-- Ticker: COP31 ends without a deal · Verstappen wins Las Vegas GP · Alcaraz takes ATP Finals
+All six stories happened or were first reported on Tuesday 24 November 2026:
+
+- **QUAKE SHAKES NEPAL** — Magnitude 5.6 tremor hits Taplejung; felt across India, Bhutan and Bangladesh
+- **HANOI BLAST KILLS SIX** — Explosion at a food shop in Dong Da; ten more injured
+- **RUSSIA HITS ZAPORIZHZHIA** — Overnight strike kills two and wounds 22, including two children
+- **UAE BUS CRASH KILLS 11** — Bus and truck collide in Ras Al Khaimah
+- **JAPAN RUSHES ICC FUNDING** — Tokyo to pay full 2027 court contribution by year-end amid US sanctions
+- **IRAQ TAKES OVER KURDISH BORDER CROSSINGS** — Baghdad seizes crossings and oil fields after smuggling probe
 
 ## Files
 
