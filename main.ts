@@ -1,38 +1,42 @@
-// news-image-20261124 — "The World Today", Tuesday 24 November 2026.
-// A small, deterministic entrypoint: it takes the front-page image that
-// ships with this repository and writes it, byte for byte, to the path
-// the competition expects. There is no network access and no randomness,
-// so running it twice produces identical output.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+// news-image-20261124: "The World Today" — Tuesday 24 November 2026.
+// This entrypoint is deliberately boring: it hands the front-page image
+// that already lives in this repo to the place the competition reads it
+// from. Nothing is fetched, nothing is generated, nothing is random, so
+// every run writes exactly the same bytes.
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = dirname(fileURLToPath(import.meta.url));
-const imagePath = join(repoRoot, "entry.png");
-const outputPath = "/output/entry.png";
+const here = dirname(fileURLToPath(import.meta.url));
+const source = resolve(here, "entry.png");
+const target = "/output/entry.png";
+const MAX_BYTES = 1024 * 1024;
 
-if (!existsSync(imagePath)) {
-  throw new Error(`front-page image is missing: ${imagePath}`);
+const size = statSync(source).size;
+if (size > MAX_BYTES) {
+  throw new Error(`entry.png is ${size} bytes, above the 1 MiB cap`);
 }
 
-const png = readFileSync(imagePath);
+const bytes = readFileSync(source);
 
-// The first eight bytes of every PNG are a fixed magic signature.
-// Refuse to write anything else, so a corrupted file can never
-// silently pass as a valid entry.
-const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-if (!png.subarray(0, 8).equals(PNG_MAGIC)) {
-  throw new Error(`not a PNG file: ${imagePath}`);
+// A real PNG always opens with these eight bytes. If the file on disk
+// is not a PNG, say so instead of writing garbage to the output.
+const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const looksLikePng = signature.every((b, i) => bytes[i] === b);
+if (!looksLikePng) {
+  throw new Error("entry.png does not start with the PNG signature");
 }
 
-// The competition caps the image at 1 MiB; fail loudly instead of
-// shipping an oversized entry.
-const ONE_MIB = 1024 * 1024;
-if (png.length > ONE_MIB) {
-  throw new Error(`entry image is ${png.length} bytes, over the 1 MiB limit`);
+// The first chunk after the signature is IHDR: its width and height sit
+// at bytes 16-19 and 20-23. The competition wants at most 1024x1024,
+// so confirm the picture is within that before writing it out.
+const width = bytes.readUInt32BE(16);
+const height = bytes.readUInt32BE(20);
+if (width > 1024 || height > 1024) {
+  throw new Error(`entry.png is ${width}x${height}, above the 1024x1024 cap`);
 }
 
-mkdirSync(dirname(outputPath), { recursive: true });
-writeFileSync(outputPath, png);
+mkdirSync(dirname(target), { recursive: true });
+writeFileSync(target, bytes);
 
-console.log(`wrote ${outputPath} (${png.length} bytes)`);
+console.log(`wrote ${target} (${bytes.length} bytes)`);
