@@ -1,51 +1,33 @@
-// news-image-20261124 — "THE WORLD TODAY", Tuesday 24 November 2026.
-//
-// The front page ships in this repo as entry.png (1024x1024 PNG). It
-// covers six stories that happened or were first reported on 24 November
-// 2026, with stylised editorial illustrations — each one tagged
-// "ILLUSTRATION" on the page, so nothing poses as a photograph of a
-// real event. This entrypoint only moves that file to the output path
-// the competition reads, after confirming it is a real PNG inside the
-// size limit. It fetches nothing and rolls no dice, so every run writes
-// the same bytes.
+// main.ts — penyalin entry news-image-20261124.
+// Membaca entry.png di folder yang sama, memeriksa bahwa berkas itu
+// benar-benar PNG 1024x1024 dan tidak lebih dari 1 MiB, lalu menyalinnya
+// apa adanya ke /output/entry.png. Tidak ada akses jaringan sama sekali.
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+const folder = dirname(fileURLToPath(import.meta.url));
+const asal = join(folder, "entry.png");
+const tujuan = "/output/entry.png";
 
-const SOURCE = "entry.png";
-const TARGET_DIR = "/output";
-const TARGET = join(TARGET_DIR, "entry.png");
-const MAX_BYTES = 1024 * 1024; // 1 MiB
+if (!existsSync(asal)) throw new Error("entry.png tidak ada");
 
-// First eight bytes of any PNG file.
-const PNG_HEAD = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-
-if (!existsSync(SOURCE)) {
-  throw new Error(`cannot find ${SOURCE} in this repo`);
+function periksaGambar(data: Buffer): { lebar: number; tinggi: number } {
+  const magic = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (data.length > 1048576) throw new Error("entry.png lebih dari 1 MiB");
+  if (!data.subarray(0, 8).equals(magic)) throw new Error("bukan PNG");
+  if (data.subarray(12, 16).toString("ascii") !== "IHDR") throw new Error("chunk pertama bukan IHDR");
+  const lebar = data.readUInt32BE(16);
+  const tinggi = data.readUInt32BE(20);
+  if (lebar !== 1024 || tinggi !== 1024) throw new Error(`ukuran ${lebar}x${tinggi}, bukan 1024x1024`);
+  return { lebar, tinggi };
 }
-const bytes = readFileSync(SOURCE);
-checkPng(bytes);
-mkdirSync(TARGET_DIR, { recursive: true });
-writeFileSync(TARGET, bytes);
-const check = readFileSync(TARGET);
-if (!check.equals(bytes)) {
-  throw new Error(`${TARGET} differs from ${SOURCE} after copying`);
-}
-console.log(`wrote ${TARGET} (${bytes.length} bytes, 1024x1024)`);
 
-// The size, signature and dimension checks, kept together so the
-// copy step above stays a straight read-then-write.
-function checkPng(data: Buffer): void {
-  if (data.length > MAX_BYTES) {
-    throw new Error(`${SOURCE} is ${data.length} bytes, over the 1 MiB limit`);
-  }
-  if (data.length < 33 || !data.subarray(0, 8).equals(PNG_HEAD)) {
-    throw new Error(`${SOURCE} is not a valid PNG`);
-  }
-  // In a PNG the IHDR chunk holds width (bytes 16..19) and height (20..23).
-  const w = data.readUInt32BE(16);
-  const h = data.readUInt32BE(20);
-  if (w !== 1024 || h !== 1024) {
-    throw new Error(`expected 1024x1024, got ${w}x${h}`);
-  }
-}
+const data = readFileSync(asal);
+const { lebar, tinggi } = periksaGambar(data);
+
+mkdirSync("/output", { recursive: true });
+copyFileSync(asal, tujuan);
+const hasil = readFileSync(tujuan);
+if (!hasil.equals(data)) throw new Error("salinan tidak identik dengan sumber");
+console.log(`disalin: ${tujuan} (${data.length} byte, ${lebar}x${tinggi})`);
